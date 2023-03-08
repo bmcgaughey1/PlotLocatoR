@@ -1,0 +1,15 @@
+Package: PlotLocatoR
+Type: Package
+Title: Tools to help georeference stem-mapped forestry plots using lidar-derived canopy height models
+Version: 0.1.0
+Authors@R: person("Robert", "McGaughey", email = "robert.mcgaughey@usda.gov", role = c("aut", "cre"))
+Maintainer: The package maintainer <bmcgaughey1@gmail.com>
+Description: PlotLocatoR provides R functions that help refine the location of stem-mapped
+    forestry plots using the tree locations and a lidar-derived canopy height model.
+Imports:
+    sf,
+    terra
+License: CC0
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.1

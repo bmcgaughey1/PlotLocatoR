@@ -1,5 +1,21 @@
 # Code to do image correlation to help adjust plot locations
 #
+# You can learn more about package authoring with RStudio at:
+#
+#   http://r-pkgs.had.co.nz/
+#
+# Some useful keyboard shortcuts for package authoring:
+#
+#   Install Package:           Ctrl + Shift + B
+#   Check Package:             Ctrl + Shift + E
+#   Test Package:              Ctrl + Shift + T
+#   Build documentation:       Ctrl + Shift + D...not working
+#   Build vignette:            Ctrl + Shift + K
+#
+# setwd("G:/R_Stuff/PlotLocatoR")
+#
+# To build documentation:
+# devtools::document()
 
 # isOpt
 #
@@ -75,7 +91,7 @@ isOpt <- function(x) { invisible(!is.null(x)) }
 #'  for a single location since the height error term in the combined score would go to 0.0.
 #' @export
 #'
-#' @examples
+# ' @examples
 computeCorrelationAndHeightError <- function(
   stemMap,
   coords = NULL,
@@ -183,7 +199,7 @@ computeCorrelationAndHeightError <- function(
 #' @return Data frame with search results.
 #' @export
 #'
-#' @examples
+# ' @examples
 testPlotLocations <- function(
   stemMap,
   coords = NULL,
@@ -257,7 +273,7 @@ testPlotLocations <- function(
 #' location and the correlation and height error "scores".
 #' @export
 #'
-#' @examples
+# ' @examples
 findBestPlotLocation <- function(
     searchResults,
     rule = "maxcorrelation"
@@ -283,7 +299,7 @@ findBestPlotLocation <- function(
 #' @return SpatRaster object
 #' @export
 #'
-#' @examples
+# ' @examples
 rasterizeSearchResults <- function(
     searchResults,
     value = "correlation"
