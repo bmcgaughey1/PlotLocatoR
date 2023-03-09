@@ -2,7 +2,7 @@
 % Please edit documentation in R/main.R
 \name{testPlotLocations}
 \alias{testPlotLocations}
-\title{testPlotLocations}
+\title{Test a grid of potential plot locations.}
 \usage{
 testPlotLocations(
   stemMap,

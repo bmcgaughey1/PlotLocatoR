@@ -2,7 +2,7 @@
 % Please edit documentation in R/main.R
 \name{rasterizeSearchResults}
 \alias{rasterizeSearchResults}
-\title{rasterizeSearchResults}
+\title{Rasterize the results of a brute force search for plot locations.}
 \usage{
 rasterizeSearchResults(searchResults, value = "correlation")
 }
@@ -16,5 +16,6 @@ rasterizeSearchResults(searchResults, value = "correlation")
 SpatRaster object
 }
 \description{
-Rasterize the results of a brute force search for plot locations.
+The returned raster can be rendered to produce visuals showing the results of
+the brute-force search.
 }

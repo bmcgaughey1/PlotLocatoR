@@ -31,8 +31,6 @@
 #' @keywords internal
 isOpt <- function(x) { invisible(!is.null(x)) }
 
-#' computeCorrelationAndHeightError
-#'
 #' Computes correlation between the stem map (with height) and CHM along with a
 #' height error statistic.
 #'
@@ -55,7 +53,7 @@ isOpt <- function(x) { invisible(!is.null(x)) }
 #' The height error is the weighted mean absolute error between the tree map and
 #' the CHM.
 #'
-#' The is method is taken from:
+#' The method is taken from:
 #' Monnet, Jean-Matthieu, and Éric Mermin. 2014. "Cross-Correlation of Diameter Measures for
 #' the Co-Registration of Forest Inventory Plots with Airborne Laser Scanning Data" Forests 5,
 #' no. 9: 2307-2326. https://doi.org/10.3390/f5092307
@@ -166,7 +164,7 @@ computeCorrelationAndHeightError <- function(
   return(data.frame(correlation, htError))
 }
 
-#' testPlotLocations
+#' Test a grid of potential plot locations.
 #'
 #' Apply a brute-force approach to test a grid of potential plot locations and
 #' report the results in a data frame including the offsets from the original
@@ -263,7 +261,9 @@ testPlotLocations <- function(
   return(res)
 }
 
-#' findBestPlotLocation
+#' Identify the best location from \code{testPlotLocations} results.
+#'
+#' Identifies the location in \code{searchResults} that best satisfies the \code{rule}.
 #'
 #' @param searchResults Data frame returned by \code{testPlotLocations}.
 #' @param rule Rule to be used to determine the best plot location. Possible
@@ -288,9 +288,10 @@ findBestPlotLocation <- function(
   else stop(paste("Invalid rule:", rule))
 }
 
-#' rasterizeSearchResults
-#'
 #' Rasterize the results of a brute force search for plot locations.
+#'
+#' The returned raster can be rendered to produce visuals showing the results of
+#' the brute-force search.
 #'
 #' @param searchResults Data frame returned by \code{testPlotLocations}.
 #' @param value Value used to populate the raster. Possible values are "correlation",
@@ -304,20 +305,116 @@ rasterizeSearchResults <- function(
     searchResults,
     value = "correlation"
 ) {
-  r <- rast(xmin = min(searchResults$offsetX),
+  r <- terra::rast(xmin = min(searchResults$offsetX),
              ymin = min(searchResults$offsetY),
              xmax = max(searchResults$offsetX),
              ymax = max(searchResults$offsetY),
              resolution = searchResults$offsetY[2] - searchResults$offsetY[1])
 
   if (tolower(value) == "correlation")
-    rr <- rasterize(as.matrix(searchResults[, 1:2]), r, values = searchResults[, 3])
+    rr <- terra::rasterize(as.matrix(searchResults[, 1:2]), r, values = searchResults[, 3])
   else if (tolower(value) == "heighterror")
-    rr <- rasterize(as.matrix(searchResults[, 1:2]), r, values = searchResults[, 4])
+    rr <- terra::rasterize(as.matrix(searchResults[, 1:2]), r, values = searchResults[, 4])
   else if (tolower(value) == "combined")
-    rr <- rasterize(as.matrix(searchResults[, 1:2]), r, values = searchResults[, 5])
+    rr <- terra::rasterize(as.matrix(searchResults[, 1:2]), r, values = searchResults[, 5])
   else
     stop(paste("Invalid value:", value))
 
   return(invisible(rr))
+}
+
+#' Compute tree positions given azimuth and distance measurements for each tree.
+#'
+#' Computes tree locations given the distance and azimuth to each tree from a single reference point.
+#' Ideally you have an accurate location for the reference point. However, you can produce a stem
+#' map in local coordinates (reference point at (0,0)) and then shift tree locations at a later time
+#' using the \code{moveTreesToPlotXY} function.
+#'
+#' This function is designed for cases where all trees are measured from a single reference point. If
+#' you have used multiple reference points, you can call \code{computeLocalTreePositions} multiple
+#' times using the different \code{xRef,yRef} and associated trees and then merge the results to
+#' create a single tree list. This function is best suited for circular plots but can be used for
+#' any data where distance and azimuth from a known reference point have been recorded.
+#'
+#' @param trees Data frame with tree information. Must contain at least azimuth and distance (m).
+#'  If adjusting distances to offset to the center of each tree, the data frame must contain
+#'  the DBH. By default, DBH should be in cm but you can include the \code{dbhConversionFactor}
+#'  parameter to use DBH in different units.
+#' @param xRef X value for the reference point.
+#' @param yRef Y value for the reference point.
+#' @param azLabel Column label for the column containing azimuth values.
+#' @param distLabel Column label for the column containing distance values.
+#' @param dbhLabel Column label for the column containing DBH value.
+#' @param dbhConversionFactor Conversion factor to convert units for tree DBH into the same units
+#'  as distances.
+#' @param declination Magnetic declination. East declination is positive. You only need the declination
+#'  if compasses were set to 0 declination for field measurements. If compasses were set for local
+#'  declination, you don't need to provide a declination value.
+#' @param adjustForDBH Boolean to control offsetting distance to account for tree DBH. Set this to TRUE if
+#'  distances were measured to the side of the tree facing the reference point. If disances were
+#'  measured to the center of the tree, set to FALSE.
+#'
+#' @return Data frame containing the tree locations. Rows are in the same order as the input \code{trees} data frame.
+#' @export
+#'
+# ' @examples
+computeLocalTreePositions <- function(
+    trees,
+    xRef = 0,
+    yRef = 0,
+    azLabel = "Azimuth",
+    distLabel = "Distance",
+    dbhLabel = "DBH_cm",
+    dbhConversionFactor = 0.01,
+    declination = 0,
+    adjustForDBH = FALSE
+) {
+  # adjust distance to account for offset to tree center
+  dist <- trees[, distLabel]
+  if (adjustForDBH) dist <- dist + (trees[, dbhLabel] * dbhConversionFactor / 2.0)
+
+  # compute XY using distance, azimuth...optional adjust for declination and offset to reference location
+  X <- data.frame(cos((450 - (trees[, azLabel] - declination)) * pi / 180.0) * dist + xRef)
+  Y <- data.frame(sin((450 - (trees[, azLabel] - declination)) * pi / 180.0) * dist + yRef)
+
+  t <- cbind(as.data.frame(X), as.data.frame(Y))
+  colnames(t) <- c("Xfield", "Yfield")
+
+  return(t)
+}
+
+#' Translates trees from a local origin to a refrence point.
+#'
+#' \code{moveTreesToPlotXY} assumes tree locations are relative to (0,0) and applies
+#' a simple translation operation to shift trees. If a stem map was initially created
+#' with an incorrect reference points, you will need to call \code{moveTreesToPlotXY}
+#' with the incorrect X and Y multiplied by -1 to translate tree locations to a local
+#' reference point and then call \code{moveTreesToPlotXY} again with the new reference
+#' point location.
+#'
+#' @param trees Data frame with tree information. Must contain at least azimuth and distance (m).
+#'  If adjusting distances to offset to the center of each tree, the data frame must contain
+#'  the DBH. By default, DBH should be in cm but you can include the \code{dbhConversionFactor}
+#'  parameter to use DBH in different units.
+#' @param xRef X value for the reference point.
+#' @param yRef Y value for the reference point.
+#' @param xLabel Column label for the column containing X values for trees.
+#' @param yLabel Column label for the column containing Y values for trees.
+#'
+#' @return Return value is the \code{trees} data frame with modified X and Y values.
+#' @export
+#'
+# ' @examples
+moveTreesToPlotXY <- function(
+    trees,
+    xRef = 0,
+    yRef = 0,
+    xLabel = "Xfield",
+    yLabel = "Yfield"
+) {
+  # translate tree positions relative to (0,0) to actual plot locations
+  trees[, xLabel] <- trees[, xLabel] + xRef
+  trees[, yLabel] <- trees[, yLabel] + yRef
+
+  return(trees)
 }

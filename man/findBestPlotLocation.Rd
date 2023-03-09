@@ -2,7 +2,7 @@
 % Please edit documentation in R/main.R
 \name{findBestPlotLocation}
 \alias{findBestPlotLocation}
-\title{findBestPlotLocation}
+\title{Identify the best location from \code{testPlotLocations} results.}
 \usage{
 findBestPlotLocation(searchResults, rule = "maxcorrelation")
 }
@@ -17,5 +17,5 @@ Index into the data frame containing the offset from the original plot
 location and the correlation and height error "scores".
 }
 \description{
-findBestPlotLocation
+Identifies the location in \code{searchResults} that best satisfies the \code{rule}.
 }

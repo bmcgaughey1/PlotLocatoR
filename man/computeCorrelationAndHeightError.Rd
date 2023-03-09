@@ -2,7 +2,8 @@
 % Please edit documentation in R/main.R
 \name{computeCorrelationAndHeightError}
 \alias{computeCorrelationAndHeightError}
-\title{computeCorrelationAndHeightError}
+\title{Computes correlation between the stem map (with height) and CHM along with a
+height error statistic.}
 \usage{
 computeCorrelationAndHeightError(
   stemMap,
@@ -52,15 +53,12 @@ Data frame with the correlation and height error statistics. The combined error 
  for a single location since the height error term in the combined score would go to 0.0.
 }
 \description{
-Computes correlation between the stem map (with height) and CHM along with a
-height error statistic.
-}
-\details{
 This function is typically used in a brute force process designed to find the
 best location for a plot given stem-mapped trees and a lidar-derived canopy
 height model (CHM). It can also be used to compute a one-time set of fit
 metrics useful for comparing one location with another.
-
+}
+\details{
 The correlation is Pearson's correlation coefficient computed by
 terra::layerCor between a tree map and the CHM (masked by the tree map raster
 layer). The tree map is created using a buffer around the tree locations
@@ -75,7 +73,7 @@ the CHM and tree map to compute the coefficient.
 The height error is the weighted mean absolute error between the tree map and
 the CHM.
 
-The is method is taken from:
+The method is taken from:
 Monnet, Jean-Matthieu, and Éric Mermin. 2014. "Cross-Correlation of Diameter Measures for
 the Co-Registration of Forest Inventory Plots with Airborne Laser Scanning Data" Forests 5,
 no. 9: 2307-2326. https://doi.org/10.3390/f5092307
