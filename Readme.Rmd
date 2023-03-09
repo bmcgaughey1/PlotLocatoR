@@ -46,3 +46,94 @@ You can install the development version from [GitHub](https://github.com/) with:
 library(devtools)
 devtools::install_github("bmcgaughey1/PlotLocatoR", build_vignettes = TRUE)
 ```
+
+## Example
+
+The PlotLocatoR package includes sample data for a plot and a canopy height model (CHM) clipped
+to cover the area containing the "best" plot location. The CHM was created from high density lidar
+data (1000+ pulses/m^2^) collected from a UAS platform. The initial plot location was collected
+with a survey-grade GNSS receiver (Javad Triumph 2). Under test conditions, this receiver can collect
+location data accurate to ~1m. However, for this plot the location was off by several meters.
+
+The objective of this example is to find an improved plot location. For the field data, distance was
+measured to the center of the stem and azimuth included local declination. Tree heights were predicted
+using an equation developed from field DBH and lidar-derived tree heights. For this example the 10 
+tallest trees on the plot are used to conduct the search for a better location.
+
+```{r}
+library(PlotLocatoR)
+
+# load the plot data
+P13Field <- read.csv("data/plot13.csv", 
+                     header = TRUE,
+                     stringsAsFactors = FALSE)
+
+# sort by height and select 10 tallest trees
+P13Field <- P13Field[order(-P13Field$Ht_m),]
+P13FieldSubset <- P13Field[1:10,]
+
+# this is the plot location from GNSS in UTM NAD83 zone 10 (EPSG:26910)
+plotX <- 418620.0
+plotY <- 5276654.0
+
+# read the CHM into a terra SpatRaster object
+CHM <- terra::rast("data/Plot13_CHM.tif")
+
+# create the stem map from the field data and the GNSS location
+P13_map <- PlotLocatoR::computeLocalTreePositions(P13FieldSubset,
+                                                  plotX,
+                                                  plotY,
+                                                  azLabel = "Azimuth",
+                                                  distLabel = "Distance",
+                                                  dbhLabel = "DBH_cm"
+                                                  )
+
+# bind XY locations to plot data
+P13 <- data.frame(P13FieldSubset, P13_map)
+
+# plot the CHM with the stem map and original plot center
+terra::plot(CHM, main = "Plot 13--GNSS location")
+points(plotX, plotY, pch = 3, col = "red")
+points(P13$Xfield, P13$Yfield, pch = 19, col = "black")
+
+# perform a brute-force assessment of alternate plot locations
+# grid resolution for possible locations will match the cell size of the CHM
+sr <- testPlotLocations(
+  P13,
+  coords = c("Xfield", "Yfield"),
+  htField = "Ht_m",
+  plotX = plotX,
+  plotY = plotY,
+  plotRadius = 17.68,
+  treeBufferSize = 1,
+  crs = 26910,
+  CHM = CHM,
+  searchRadius = 7,
+  progress = FALSE
+)
+
+# get the index of the best location
+bestIndex <- findBestPlotLocation(sr, rule = "minheighterror")
+
+# compute new plot location
+plotXAdj <- plotX + sr$offsetX[bestIndex]
+plotYAdj <- plotY + sr$offsetY[bestIndex]
+
+# compute new tree locations using adjusted plot location
+P13_mapAdj <- PlotLocatoR::computeLocalTreePositions(P13Field,
+                                                  plotXAdj,
+                                                  plotYAdj,
+                                                  azLabel = "Azimuth",
+                                                  distLabel = "Distance",
+                                                  dbhLabel = "DBH_cm"
+                                                  )
+# bind XY locations to plot data
+P13Adj <- data.frame(P13Field, P13_mapAdj)
+
+# plot everything
+terra::plot(CHM, main = "Plot 13--Adjusted location")
+points(P13Adj$Xfield, P13Adj$Yfield, pch = 19, col = "magenta")
+points(plotXAdj, plotYAdj, pch = 9, col = "magenta")
+
+```
+

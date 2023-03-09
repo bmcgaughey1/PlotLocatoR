@@ -144,7 +144,7 @@ computeCorrelationAndHeightError <- function(
 
   PM <- terra::rasterize(terra::vect(treesBuf)
                   , r
-                  , field = "T3Ht"
+                  , field = htField
                   , extent = terra::ext(plotCHM)
                   , resolution = terra::res(plotCHM)[1]
   )
