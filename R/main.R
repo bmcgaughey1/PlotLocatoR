@@ -171,10 +171,13 @@ computeCorrelationAndHeightError <- function(
 #' plot location, correlation scores and overall height error associated with
 #' the trial plot location. The results are used with findBestPlotLocation() to
 #' find the best location based on the correlation or the height error results
-#' or a combination of the two. For the combined rule, the height error is
-#' normalized relative to the maximum height error and subtracted from 1.0. The
-#' combined "score" is then the correlation * normalized height and the best
-#' location is the one with the highest combined score.
+#' or a combination of the two. For the combined score, the minimum height error
+#' is subtracted from the height error and the result is normalized
+#' relative to the maximum height error minus the minimum height error and subtracted from 1.0. The
+#' "score" is then multiplied by (correlation / max(correlation)) to obtain the final score.
+#' If the combined score is 1.0 for a test location, the location maximizes the correlation and
+#' minimizes the height error. Scores less than 1.0, represent a compromise between good
+#' overall correlation and height error.
 #'
 #' The grid of potential plot locations is created using the resolution of the CHM so the
 #' plotRadius should be a multiple of the CHM resolution.
@@ -256,7 +259,7 @@ testPlotLocations <- function(
   }
 
   # compute the combined score
-  res$combined <- (1.0 - (res$htError / max(res$htError))) * res$correlation
+  res$combined <- (1.0 - ((res$htError - min(res$htError)) / (max(res$htError) - min(res$htError)))) * (res$correlation / max(res$correlation))
 
   return(res)
 }

@@ -49,18 +49,23 @@ devtools::install_github("bmcgaughey1/PlotLocatoR", build_vignettes = TRUE)
 The PlotLocatoR package includes sample data for a plot and a canopy
 height model (CHM) clipped to cover the area containing the “best” plot
 location. The CHM was created from high density lidar data (1000+
-pulses/m<sup>2</sup>) collected from a UAS platform. The initial plot
-location was collected with a survey-grade GNSS receiver (Javad Triumph
-2). Under test conditions, this receiver can collect location data
-accurate to \~1m. However, for this plot the location was off by several
-meters.
+pulses/m<sup>2</sup>) collected from a UAS platform. CHM resolution is
+0.5m. The initial plot location was collected with a survey-grade GNSS
+receiver (Javad Triumph 2). Under test conditions, this receiver can
+collect location data accurate to \~1m in forest conditions with a
+15-minute occupation time and 1-second epochs. However, for this plot,
+the location was off by several meters.
 
-The objective of this example is to find an improved plot location. For
-the field data, distance was measured to the center of the stem and
-azimuth included local declination. Tree heights were predicted using an
-equation developed from field DBH and lidar-derived tree heights. For
-this example the 10 tallest trees on the plot are used to conduct the
-search for a better location.
+The objective of this example is to improve the plot location. For the
+field data, distance was measured to the center of the stem and azimuth
+included local declination. Tree heights were predicted using an
+equation developed from field DBH and lidar-derived tree heights. In
+practice, dominant and co-dominant trees should produce the best match
+but it really depends on the forest type, slope and tree lean. The field
+protocol used to collect the field data included a special attribute for
+each tree indicating whether or not the tree was visible from above
+(LiDAR_visible). This attribute was used to select the trees used for
+the location search.
 
 ``` r
 library(PlotLocatoR)
@@ -70,19 +75,12 @@ P13Field <- read.csv("data/plot13.csv",
                      header = TRUE,
                      stringsAsFactors = FALSE)
 
-# sort by height and select 10 tallest trees
-P13Field <- P13Field[order(-P13Field$Ht_m),]
-P13FieldSubset <- P13Field[1:10,]
-
 # this is the plot location from GNSS in UTM NAD83 zone 10 (EPSG:26910)
 plotX <- 418620.0
 plotY <- 5276654.0
 
-# read the CHM into a terra SpatRaster object
-CHM <- terra::rast("data/Plot13_CHM.tif")
-
 # create the stem map from the field data and the GNSS location
-P13_map <- PlotLocatoR::computeLocalTreePositions(P13FieldSubset,
+P13_map <- PlotLocatoR::computeLocalTreePositions(P13Field,
                                                   plotX,
                                                   plotY,
                                                   azLabel = "Azimuth",
@@ -91,17 +89,30 @@ P13_map <- PlotLocatoR::computeLocalTreePositions(P13FieldSubset,
                                                   )
 
 # bind XY locations to plot data
-P13 <- data.frame(P13FieldSubset, P13_map)
+P13 <- data.frame(P13Field, P13_map)
 
-# plot the CHM with the stem map and original plot center
+# sort by decreasing height
+P13 <- P13[order(-P13$Ht_m),]
+
+# select 10 tallest trees
+#P13FieldSubset <- P13[1:10,]
+
+# select trees based on the LiDAR_visible attribute
+P13FieldSubset <- P13[P13$LiDAR_visible == "Y",]
+
+# read the CHM into a terra SpatRaster object
+CHM <- terra::rast("data/Plot13_CHM.tif")
+
+# plot the CHM with the original stem map and plot location
 terra::plot(CHM, main = "Plot 13--GNSS location")
 points(plotX, plotY, pch = 3, col = "red")
-points(P13$Xfield, P13$Yfield, pch = 19, col = "black")
+points(P13$Xfield, P13$Yfield, pch = 3, col = "black")
+points(P13FieldSubset$Xfield, P13FieldSubset$Yfield, pch = 19, col = "black")
 
 # perform a brute-force assessment of alternate plot locations
 # grid resolution for possible locations will match the cell size of the CHM
 sr <- testPlotLocations(
-  P13,
+  P13FieldSubset,
   coords = c("Xfield", "Yfield"),
   htField = "Ht_m",
   plotX = plotX,
@@ -120,7 +131,7 @@ sr <- testPlotLocations(
 ``` r
 
 # get the index of the best location
-bestIndex <- findBestPlotLocation(sr, rule = "minheighterror")
+bestIndex <- findBestPlotLocation(sr, rule = "combined")
 
 # compute new plot location
 plotXAdj <- plotX + sr$offsetX[bestIndex]
