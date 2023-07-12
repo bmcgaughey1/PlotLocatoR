@@ -13,7 +13,7 @@ findBestPlotLocation(searchResults, rule = "maxcorrelation")
 values are "maxCorrelation", "minHeightError", and "combined".}
 }
 \value{
-Index into the data frame containing the offset from the original plot
+Index into the \code{searchResults} data frame containing the offset from the original plot
 location and the correlation and height error "scores".
 }
 \description{

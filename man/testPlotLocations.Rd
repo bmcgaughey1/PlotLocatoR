@@ -22,9 +22,9 @@ testPlotLocations(
 \item{stemMap}{Data frame with stem map data for a single plot. Needs to have XY coordinates for
 trees and a height for each tree.}
 
-\item{coords}{Names of fields in stemMap containing X and Y values for tree locations.}
+\item{coords}{Names of fields in \code{stemMap} containing X and Y values for tree locations.}
 
-\item{htField}{Name of field in stemMap containing the tree height. Units should be the same
+\item{htField}{Name of field in \code{stemMap} containing the tree height. Units should be the same
 as the height units in the CHM.}
 
 \item{plotX}{Plot easting.}
@@ -51,17 +51,27 @@ Data frame with search results.
 Apply a brute-force approach to test a grid of potential plot locations and
 report the results in a data frame including the offsets from the original
 plot location, correlation scores and overall height error associated with
-the trial plot location. The results are used with findBestPlotLocation() to
-find the best location based on the correlation or the height error results
-or a combination of the two. For the combined score, the minimum height error
-is subtracted from the height error and the result is normalized
-relative to the maximum height error minus the minimum height error and subtracted from 1.0. The
-"score" is then multiplied by (correlation / max(correlation)) to obtain the final score.
-If the combined score is 1.0 for a test location, the location maximizes the correlation and
-minimizes the height error. Scores less than 1.0, represent a compromise between good
-overall correlation and height error.
+the trial plot location. The results are used with
+\code{findBestPlotLocation} to find the best location based on the
+correlation or the height error results or a combination of the two. For the
+combined score, the minimum height error is subtracted from the height error
+and the result is normalized relative to the maximum height error minus the
+minimum height error and subtracted from 1.0. The "score" is then multiplied
+by (correlation / max(correlation)) to obtain the final score. If the
+combined score is 1.0 for a test location, the location maximizes the
+correlation and minimizes the height error. Scores less than 1.0, represent a
+compromise between good overall correlation and height error. The combined
+score is only meaningful when computed over a set of possible locations. It
+relies on the minimum and maximum height error values and the maximum
+correlation value and is undefined for a single location.
 }
 \details{
 The grid of potential plot locations is created using the resolution of the CHM so the
-plotRadius should be a multiple of the CHM resolution.
+\code{plotRadius} should be a multiple of the CHM resolution.
+
+This grid-based approach can only test potential locations based on a simple
+translation of the stem map. Rotation is not accommodated. This can cause
+problems if an incorrect declination is used for compasses or in areas with
+high concentrations of magnetic minerals or other conditions affecting
+compass readings.
 }

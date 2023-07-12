@@ -55,7 +55,7 @@ CHM was created from high density lidar data (1000+ pulses/m^2^) collected from
 a UAS platform. CHM resolution is 0.5m. The initial plot location was collected
 with a survey-grade GNSS receiver (Javad Triumph 2). Under test conditions, this
 receiver can collect location data accurate to ~1m in forest conditions with a
-15-minute occupation time and 1-second epochs. However, for this plot, the
+15-minute occupation time and 1-second epochs. However, for this plot, the GNSS
 location was off by several meters.
 
 The objective of this example is to improve the plot location. For the field
@@ -81,7 +81,7 @@ plotX <- 418620.0
 plotY <- 5276654.0
 
 # create the stem map from the field data and the GNSS location
-P13_map <- PlotLocatoR::computeLocalTreePositions(P13Field,
+P13_map <- PlotLocatoR::computeTreePositions(P13Field,
                                                   plotX,
                                                   plotY,
                                                   azLabel = "Azimuth",
@@ -89,20 +89,27 @@ P13_map <- PlotLocatoR::computeLocalTreePositions(P13Field,
                                                   dbhLabel = "DBH_cm"
                                                   )
 
-# bind XY locations to plot data
+# add XY locations to plot data
 P13 <- data.frame(P13Field, P13_map)
 
-# sort by decreasing height
+# sort by decreasing height...not really needed unless 
+# you want to use the n tallest trees
 P13 <- P13[order(-P13$Ht_m),]
 
 # select 10 tallest trees
-#P13FieldSubset <- P13[1:10,]
+##P13FieldSubset <- P13[1:10,]
 
 # select trees based on the LiDAR_visible attribute
 P13FieldSubset <- P13[P13$LiDAR_visible == "Y",]
+#P13FieldSubset <- P13
 
 # read the CHM into a terra SpatRaster object
 CHM <- terra::rast("data/Plot13_CHM.tif")
+#CHM <- terra::rast("data/Plot13_CHM_4m_stems.tif")
+
+# set tree heights to 4m plus random variation...necessary or correlation is undefined
+# since all pixel values will be equal to the mean value
+#P13FieldSubset$truncHt <- 4 + runif(nrow(P13FieldSubset), -0.1, 0.1)
 
 # plot the CHM with the original stem map and plot location
 terra::plot(CHM, main = "Plot 13--GNSS location")
@@ -116,6 +123,7 @@ sr <- testPlotLocations(
   P13FieldSubset,
   coords = c("Xfield", "Yfield"),
   htField = "Ht_m",
+#  htField = "truncHt",
   plotX = plotX,
   plotY = plotY,
   plotRadius = 17.68,
@@ -127,14 +135,14 @@ sr <- testPlotLocations(
 )
 
 # get the index of the best location
-bestIndex <- findBestPlotLocation(sr, rule = "combined")
+bestIndex <- findBestPlotLocation(sr, rule = "minheighterror")
 
 # compute new plot location
 plotXAdj <- plotX + sr$offsetX[bestIndex]
 plotYAdj <- plotY + sr$offsetY[bestIndex]
 
 # compute new tree locations using adjusted plot location
-P13_mapAdj <- PlotLocatoR::computeLocalTreePositions(P13Field,
+P13_mapAdj <- PlotLocatoR::computeTreePositions(P13Field,
                                                   plotXAdj,
                                                   plotYAdj,
                                                   azLabel = "Azimuth",

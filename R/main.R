@@ -1,4 +1,9 @@
 # Code to do image correlation to help adjust plot locations
+# look for Fourier Mellin transform
+# https://stackoverflow.com/questions/57801071/get-rotational-shift-using-phase-correlation-and-log-polar-transform
+# https://sthoduka.github.io/imreg_fmt/docs/phase-correlation/
+# https://sthoduka.github.io/imreg_fmt/docs/overall-pipeline/
+# https://stackoverflow.com/questions/30630632/performing-a-phase-correlation-with-fft-in-r
 #
 # You can learn more about package authoring with RStudio at:
 #
@@ -133,7 +138,7 @@ computeCorrelationAndHeightError <- function(
       treesBuf <- sf::st_buffer(trees, treeBufferSize)
     }
     else {
-      treesbuf <- trees
+      treesBuf <- trees
     }
   }
 
@@ -169,23 +174,33 @@ computeCorrelationAndHeightError <- function(
 #' Apply a brute-force approach to test a grid of potential plot locations and
 #' report the results in a data frame including the offsets from the original
 #' plot location, correlation scores and overall height error associated with
-#' the trial plot location. The results are used with findBestPlotLocation() to
-#' find the best location based on the correlation or the height error results
-#' or a combination of the two. For the combined score, the minimum height error
-#' is subtracted from the height error and the result is normalized
-#' relative to the maximum height error minus the minimum height error and subtracted from 1.0. The
-#' "score" is then multiplied by (correlation / max(correlation)) to obtain the final score.
-#' If the combined score is 1.0 for a test location, the location maximizes the correlation and
-#' minimizes the height error. Scores less than 1.0, represent a compromise between good
-#' overall correlation and height error.
+#' the trial plot location. The results are used with
+#' \code{findBestPlotLocation} to find the best location based on the
+#' correlation or the height error results or a combination of the two. For the
+#' combined score, the minimum height error is subtracted from the height error
+#' and the result is normalized relative to the maximum height error minus the
+#' minimum height error and subtracted from 1.0. The "score" is then multiplied
+#' by (correlation / max(correlation)) to obtain the final score. If the
+#' combined score is 1.0 for a test location, the location maximizes the
+#' correlation and minimizes the height error. Scores less than 1.0, represent a
+#' compromise between good overall correlation and height error. The combined
+#' score is only meaningful when computed over a set of possible locations. It
+#' relies on the minimum and maximum height error values and the maximum
+#' correlation value and is undefined for a single location.
 #'
 #' The grid of potential plot locations is created using the resolution of the CHM so the
-#' plotRadius should be a multiple of the CHM resolution.
+#' \code{plotRadius} should be a multiple of the CHM resolution.
+#'
+#' This grid-based approach can only test potential locations based on a simple
+#' translation of the stem map. Rotation is not accommodated. This can cause
+#' problems if an incorrect declination is used for compasses or in areas with
+#' high concentrations of magnetic minerals or other conditions affecting
+#' compass readings.
 #'
 #' @param stemMap Data frame with stem map data for a single plot. Needs to have XY coordinates for
 #'  trees and a height for each tree.
-#' @param coords Names of fields in stemMap containing X and Y values for tree locations.
-#' @param htField Name of field in stemMap containing the tree height. Units should be the same
+#' @param coords Names of fields in \code{stemMap} containing X and Y values for tree locations.
+#' @param htField Name of field in \code{stemMap} containing the tree height. Units should be the same
 #'  as the height units in the CHM.
 #' @param plotX Plot easting.
 #' @param plotY plot northing.
@@ -272,7 +287,7 @@ testPlotLocations <- function(
 #' @param rule Rule to be used to determine the best plot location. Possible
 #' values are "maxCorrelation", "minHeightError", and "combined".
 #'
-#' @return Index into the data frame containing the offset from the original plot
+#' @return Index into the \code{searchResults} data frame containing the offset from the original plot
 #' location and the correlation and height error "scores".
 #' @export
 #'
@@ -334,7 +349,7 @@ rasterizeSearchResults <- function(
 #' using the \code{moveTreesToPlotXY} function.
 #'
 #' This function is designed for cases where all trees are measured from a single reference point. If
-#' you have used multiple reference points, you can call \code{computeLocalTreePositions} multiple
+#' you have used multiple reference points, you can call \code{ComputeTreePositions} multiple
 #' times using the different \code{xRef,yRef} and associated trees and then merge the results to
 #' create a single tree list. This function is best suited for circular plots but can be used for
 #' any data where distance and azimuth from a known reference point have been recorded.
@@ -345,7 +360,7 @@ rasterizeSearchResults <- function(
 #'  parameter to use DBH in different units.
 #' @param xRef X value for the reference point.
 #' @param yRef Y value for the reference point.
-#' @param azLabel Column label for the column containing azimuth values.
+#' @param azLabel Column label for the column containing azimuth values in degrees.
 #' @param distLabel Column label for the column containing distance values.
 #' @param dbhLabel Column label for the column containing DBH value.
 #' @param dbhConversionFactor Conversion factor to convert units for tree DBH into the same units
@@ -354,14 +369,14 @@ rasterizeSearchResults <- function(
 #'  if compasses were set to 0 declination for field measurements. If compasses were set for local
 #'  declination, you don't need to provide a declination value.
 #' @param adjustForDBH Boolean to control offsetting distance to account for tree DBH. Set this to TRUE if
-#'  distances were measured to the side of the tree facing the reference point. If disances were
-#'  measured to the center of the tree, set to FALSE.
+#'  distances were measured to the side of the tree facing the reference point. If distances were
+#'  measured to the center of the tree bole, set to FALSE.
 #'
 #' @return Data frame containing the tree locations. Rows are in the same order as the input \code{trees} data frame.
 #' @export
 #'
 # ' @examples
-computeLocalTreePositions <- function(
+computeTreePositions <- function(
     trees,
     xRef = 0,
     yRef = 0,
@@ -420,4 +435,64 @@ moveTreesToPlotXY <- function(
   trees[, yLabel] <- trees[, yLabel] + yRef
 
   return(trees)
+}
+
+#' Compute location of a new point relative to a reference point
+#'
+#' \code{computePointXY} is used to compute the location of a new point given the location
+#' of a reference point and azimuth and distance to the new point. This is useful
+#' when a GNSS receiver is used to collect the location of a reference point but stem
+#' locations are mapped from a different point. In the field, the crew records the
+#' distance and azimuth from the reference point to the new point (or from the new
+#' point to the reference point with \code{reverse = TRUE}). The location of the new
+#' point is then used as \code{xRef, yRef} in \code{moveTreesToPlotXY} or \code{ComputeTreePositions}.
+#'
+#' @param xRef X value for the reference point.
+#' @param yRef Y value for the reference point.
+#' @param azimuth azimuth in degrees from the reference point to the new point (or from the new point to the reference
+#'  point if \code{reverse = TRUE}).
+#' @param distance distance from the reference point to the new point.
+#' @param declination Magnetic declination. East declination is positive. You only need the declination
+#'  if compasses were set to 0 declination for field measurements. If compasses were set for local
+#'  declination, you don't need to provide a declination value.
+#' @param id identifier for the new point. If not NULL, this will be added as the first column
+#'  in the data frame returned by \code{computePointXY}.
+#' @param reverse boolean indicating that the azimuth is from the new point to the reference point
+#'  instead of from the reference point to the new point.
+#'
+#' @return data frame with the new point X and Y. If \code{id} is not NULL, \code{id} is included
+#'  as the first column in the returned data frame.
+#' @export
+#'
+# ' @examples
+computePointXY <- function(
+    xRef,
+    yRef,
+    azimuth,
+    distance,
+    declination = 0,
+    id = NULL,
+    reverse = FALSE
+) {
+  adjust <- 0
+  if (reverse) {
+    adjust <- 180
+  }
+
+  # compute XY for turning point using distance, azimuth, and GPS reference location
+  X <- cos((450 - ((azimuth + adjust) - declination)) * pi / 180.0) * distance + xRef
+  Y <- sin((450 - ((azimuth + adjust) - declination)) * pi / 180.0) * distance + yRef
+
+  t <- cbind(as.data.frame(X), as.data.frame(Y))
+  colnames(t) <- c("X", "Y")
+
+  if (length(id) == 1) {
+    if (!isOpt(id)) {
+      t <- cbind(as.data.frame(id), t)
+    }
+  } else {
+    t <- cbind(as.data.frame(id), t)
+  }
+
+  return(t)
 }
