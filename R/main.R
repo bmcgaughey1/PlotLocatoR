@@ -22,8 +22,7 @@
 # To build documentation:
 # devtools::document()
 
-# isOpt
-#
+#. isOpt
 #'
 #' This is a helper function used in the package to test the
 #' value of an object: usually a function parameter. While this simply

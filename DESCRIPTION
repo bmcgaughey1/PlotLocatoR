@@ -7,6 +7,9 @@ Maintainer: The package maintainer <bmcgaughey1@gmail.com>
 Description: PlotLocatoR provides R functions that help refine the location of stem-mapped
     forestry plots using the tree locations and a lidar-derived canopy height model.
 Imports:
+    imagefx,
+    stats,
+    lidR,
     sf,
     terra
 License: CC0
