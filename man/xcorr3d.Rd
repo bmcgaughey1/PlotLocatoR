@@ -6,12 +6,23 @@
 was taken from the imagefx package and modified to better handle NA values
 in the image matrices.}
 \usage{
-xcorr3d(img1, img2)
+xcorr3d(img1, img2, normalize = TRUE, addNoise = TRUE, noiseMagnitude = 1)
 }
 \arguments{
 \item{img1}{matrix: image representing reference set of objects}
 
 \item{img2}{matrix: image representing movable set of objects}
+
+\item{normalize}{boolean: if TRUE, normalize the images by dividing
+by the mean value of each image.}
+
+\item{addNoise}{boolean: if TRUE, add random noise to \code{img1}. This helps
+with the matching process when you have areas of high density trees with heights
+similar to those on the plot.}
+
+\item{noiseMagnitude}{numeric value form 0.0 to 1.0 that is multiplied by the minimum\
+and maximum values in \code{img1} to set limits on the values used to add noise to
+\code{img1}.}
 }
 \value{
 \code{list} containing the following items:

@@ -17,6 +17,14 @@
 #'
 #' @param img1 matrix: image representing reference set of objects
 #' @param img2  matrix: image representing movable set of objects
+#' @param normalize boolean: if TRUE, normalize the images by dividing
+#'  by the mean value of each image.
+#' @param addNoise boolean: if TRUE, add random noise to \code{img1}. This helps
+#'  with the matching process when you have areas of high density trees with heights
+#'  similar to those on the plot.
+#' @param noiseMagnitude numeric value form 0.0 to 1.0 that is multiplied by the minimum\
+#'  and maximum values in \code{img1} to set limits on the values used to add noise to
+#'  \code{img1}.
 #'
 #' @return \code{list} containing the following items:
 #'    max.shifts shifts to align img2 with img1
@@ -27,11 +35,20 @@
 # ' @examples
 xcorr3d <- function(
     img1,
-    img2
+    img2,
+    normalize = TRUE,
+    addNoise = TRUE,
+    noiseMagnitude = 1.0
 ) {
   ## normalize by subtracting the mean
-  img1 <- img1-mean(img1, na.rm = TRUE)
-  img2 <- img2-mean(img2, na.rm = TRUE)
+  if (normalize) {
+    img1 <- img1-mean(img1, na.rm = TRUE)
+    img2 <- img2-mean(img2, na.rm = TRUE)
+  }
+
+  if (addNoise) {
+    img1 <- img1 + runif(length(img1),min(range(img1)) * noiseMagnitude, max(range(img1)) * noiseMagnitude)
+  }
 
   ## go to the frequency domain and take conjugate of first image
   IMG1c <- Conj(stats::fft(img1))
@@ -78,7 +95,7 @@ xcorr3d <- function(
   ## so take only the first max ind
   max.inds <- max.inds[1,]
 
-  ## create a list to hold the max correlation value, its indicies after
+  ## create a list to hold the max correlation value, its indices after
   ## shifting according to the zero frequency, and the original correlation matrix
   return.list = list()
   return.list$max.shifts <- max.inds
@@ -120,6 +137,14 @@ xcorr3d <- function(
 #'  defined by the \code{(initialX,initialY)} and \code{searchRadius}.
 #' @param method character string defining the method used to handle the \code{CHM}. Possible
 #'  values are "buffer" and "mask".
+#' @param normalize boolean: if TRUE, normalize the \code{CHM} and \code{stemMap} images by dividing
+#'  by the mean value of each image.
+#' @param addNoise boolean: if TRUE, add random noise to the \code{stemMap} image. This helps
+#'  with the matching process when you have areas of high density trees with heights
+#'  similar to those on the plot.
+#' @param noiseMagnitude numeric value form 0.0 to 1.0 that is multiplied by the minimum
+#'  and maximum values in the \code{CHM} image to set limits on the values used to add noise to
+#'  the \code{CHM} image.
 #'
 #' @return invisible list containing the offsets from the \code{(initialX,initialY)} position
 #'  and the (X,Y) for the best plot location.
@@ -137,7 +162,10 @@ findBestPlotLocationPhaseCorrelation <- function(
     CHMbuffer = 1.0,
     stemMapBuffer = 1.0,
     cropCHM = TRUE,
-    method = "buffer"
+    method = "buffer",
+    normalize = TRUE,
+    addNoise = TRUE,
+    noiseMagnitude = 1.0
 ) {
   NAReplaceValue <- 0
 
@@ -219,7 +247,7 @@ findBestPlotLocationPhaseCorrelation <- function(
   i2 <- terra::as.matrix(PM, wide = TRUE)
 
   # do correlation to get offset for stem map
-  shifts <- xcorr3d(i1,i2)
+  shifts <- xcorr3d(i1,i2, normalize = normalize, addNoise = addNoise)
 
   # shift vector is rotated 90 degree clockwise
   offsetX <- -shifts$max.shifts[2] * terra::res(CHM)[1]

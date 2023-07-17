@@ -15,7 +15,10 @@ findBestPlotLocationPhaseCorrelation(
   CHMbuffer = 1,
   stemMapBuffer = 1,
   cropCHM = TRUE,
-  method = "buffer"
+  method = "buffer",
+  normalize = TRUE,
+  addNoise = TRUE,
+  noiseMagnitude = 1
 )
 }
 \arguments{
@@ -44,6 +47,17 @@ defined by the \code{(initialX,initialY)} and \code{searchRadius}.}
 
 \item{method}{character string defining the method used to handle the \code{CHM}. Possible
 values are "buffer" and "mask".}
+
+\item{normalize}{boolean: if TRUE, normalize the \code{CHM} and \code{stemMap} images by dividing
+by the mean value of each image.}
+
+\item{addNoise}{boolean: if TRUE, add random noise to the \code{stemMap} image. This helps
+with the matching process when you have areas of high density trees with heights
+similar to those on the plot.}
+
+\item{noiseMagnitude}{numeric value form 0.0 to 1.0 that is multiplied by the minimum
+and maximum values in the \code{CHM} image to set limits on the values used to add noise to
+the \code{CHM} image.}
 }
 \value{
 invisible list containing the offsets from the \code{(initialX,initialY)} position
