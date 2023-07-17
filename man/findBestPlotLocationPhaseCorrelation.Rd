@@ -46,7 +46,8 @@ defined by the \code{(initialX,initialY)} and \code{searchRadius}.}
 values are "buffer" and "mask".}
 }
 \value{
-invisible list containing the (X,Y) for the best plot location
+invisible list containing the offsets from the \code{(initialX,initialY)} position
+ and the (X,Y) for the best plot location.
 }
 \description{
 findBestPlotLocationPhaseCorrelation identifies tree approximate objects (TAOs) in the \code{CHM},

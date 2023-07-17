@@ -121,7 +121,8 @@ xcorr3d <- function(
 #' @param method character string defining the method used to handle the \code{CHM}. Possible
 #'  values are "buffer" and "mask".
 #'
-#' @return invisible list containing the (X,Y) for the best plot location
+#' @return invisible list containing the offsets from the \code{(initialX,initialY)} position
+#'  and the (X,Y) for the best plot location.
 #' @export
 #'
 # ' @examples
@@ -185,7 +186,7 @@ findBestPlotLocationPhaseCorrelation <- function(
   if (method == "mask") {
     # create CHM masked using TAOs extracted from CHM...this will keep the top of the crowns
     referenceCHM <- terra::mask(CHM, TAOPM, maskvalues = 0)
-    TAOCHM[is.na(TAOCHM)] <- NAReplaceValue
+    referenceCHM[is.na(referenceCHM)] <- NAReplaceValue
   } else {
     # keep original CHM values within TAO buffers
     referenceCHM <- TAOPM
@@ -214,7 +215,7 @@ findBestPlotLocationPhaseCorrelation <- function(
   )
 
   # create matrix objects
-  i1 <- terra::as.matrix(TAOCHM, wide = TRUE)
+  i1 <- terra::as.matrix(referenceCHM, wide = TRUE)
   i2 <- terra::as.matrix(PM, wide = TRUE)
 
   # do correlation to get offset for stem map
@@ -224,5 +225,10 @@ findBestPlotLocationPhaseCorrelation <- function(
   offsetX <- -shifts$max.shifts[2] * terra::res(CHM)[1]
   offsetY <- shifts$max.shifts[1] * terra::res(CHM)[1]
 
-  invisible(return(list(initialX + offsetX, initialY + offsetY)))
+  invisible(return(list(offsetX = offsetX,
+                        offsetY = offsetY,
+                        newX = initialX + offsetX,
+                        newY = initialY + offsetY)
+                   )
+            )
 }
