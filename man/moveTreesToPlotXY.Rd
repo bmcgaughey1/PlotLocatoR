@@ -2,7 +2,7 @@
 % Please edit documentation in R/main.R
 \name{moveTreesToPlotXY}
 \alias{moveTreesToPlotXY}
-\title{Translates trees from a local origin to a refrence point.}
+\title{Translates trees from a local origin to a reference point.}
 \usage{
 moveTreesToPlotXY(
   trees,
@@ -36,4 +36,8 @@ with an incorrect reference points, you will need to call \code{moveTreesToPlotX
 with the incorrect X and Y multiplied by -1 to translate tree locations to a local
 reference point and then call \code{moveTreesToPlotXY} again with the new reference
 point location.
+}
+\details{
+\code{moveTreesToPlotXY} can also be used to offset tree locations from their current
+location. In this case, \code{xRef, yRef} is added to each tree position.
 }

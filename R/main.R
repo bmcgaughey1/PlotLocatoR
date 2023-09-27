@@ -400,7 +400,7 @@ computeTreePositions <- function(
   return(t)
 }
 
-#' Translates trees from a local origin to a refrence point.
+#' Translates trees from a local origin to a reference point.
 #'
 #' \code{moveTreesToPlotXY} assumes tree locations are relative to (0,0) and applies
 #' a simple translation operation to shift trees. If a stem map was initially created
@@ -408,6 +408,9 @@ computeTreePositions <- function(
 #' with the incorrect X and Y multiplied by -1 to translate tree locations to a local
 #' reference point and then call \code{moveTreesToPlotXY} again with the new reference
 #' point location.
+#'
+#' \code{moveTreesToPlotXY} can also be used to offset tree locations from their current
+#' location. In this case, \code{xRef, yRef} is added to each tree position.
 #'
 #' @param trees Data frame with tree information. Must contain at least azimuth and distance (m).
 #'  If adjusting distances to offset to the center of each tree, the data frame must contain

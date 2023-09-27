@@ -2,11 +2,11 @@
 % Please edit documentation in R/phaseCorrelation.R
 \name{xcorr3d}
 \alias{xcorr3d}
-\title{xcoor3d: perform image registration using phase correlation. This function
+\title{xcoor3d: perform image registration using cross correlation. This function
 was taken from the imagefx package and modified to better handle NA values
 in the image matrices.}
 \usage{
-xcorr3d(img1, img2, normalize = TRUE, addNoise = TRUE, noiseMagnitude = 1)
+xcorr3d(img1, img2, normalize = TRUE, addNoise = TRUE, noiseMultiplier = 1)
 }
 \arguments{
 \item{img1}{matrix: image representing reference set of objects}
@@ -20,7 +20,7 @@ by the mean value of each image.}
 with the matching process when you have areas of high density trees with heights
 similar to those on the plot.}
 
-\item{noiseMagnitude}{numeric value form 0.0 to 1.0 that is multiplied by the minimum\
+\item{noiseMultiplier}{numeric value form 0.0 to 1.0 that is multiplied by the minimum
 and maximum values in \code{img1} to set limits on the values used to add noise to
 \code{img1}.}
 }
@@ -32,7 +32,7 @@ and maximum values in \code{img1} to set limits on the values used to add noise 
    corr.mat
 }
 \description{
-xcoor3d: perform image registration using phase correlation. This function
+xcoor3d: perform image registration using cross correlation. This function
 was taken from the imagefx package and modified to better handle NA values
 in the image matrices.
 }
