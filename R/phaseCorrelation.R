@@ -7,11 +7,12 @@
 # https://sthoduka.github.io/imreg_fmt/docs/overall-pipeline/
 # https://stackoverflow.com/questions/30630632/performing-a-phase-correlation-with-fft-in-r
 # https://en.wikipedia.org/wiki/Phase_correlation
+# in python https://stackoverflow.com/questions/2831527/phase-correlation
 
 
 
 #'
-#' xcoor3d: perform image registration using phase correlation. This function
+#' xcoor3d: perform image registration using cross correlation. This function
 #' was taken from the imagefx package and modified to better handle NA values
 #' in the image matrices.
 #'
@@ -118,7 +119,7 @@ xcorr3d <- function(
 #' the trees on a plot. Each tree location is buffered using \code{stemMapBuffer} and all pixels in
 #' the buffer are assigned the tree height.
 #'
-#' The shift of the stem map image that best aligns with the CHM image is determined using phase correlation
+#' The shift of the stem map image that best aligns with the CHM image is determined using cross correlation
 #' and converted into a new coordinate for the reference point. This new coordinate can be used to translate
 #' the trees in the \code{stemMap}.
 #'
@@ -137,14 +138,21 @@ xcorr3d <- function(
 #'  defined by the \code{(initialX,initialY)} and \code{searchRadius}.
 #' @param method character string defining the method used to handle the \code{CHM}. Possible
 #'  values are "buffer" and "mask".
+#' @param corrMethod character string specifying the correlation method used. Options are \code{"cross"}
+#'  or \code{"phase"}.
 #' @param normalize boolean: if TRUE, normalize the \code{CHM} and \code{stemMap} images by dividing
 #'  by the mean value of each image.
-#' @param addNoise boolean: if TRUE, add random noise to the \code{stemMap} image. This helps
+#' @param addNoise boolean: if TRUE, add random noise to the \code{stemMap} image. This seems to help
 #'  with the matching process when you have areas of high density trees with heights
 #'  similar to those on the plot.
 #' @param noiseMagnitude numeric value form 0.0 to 1.0 that is multiplied by the minimum
 #'  and maximum values in the \code{CHM} image to set limits on the values used to add noise to
 #'  the \code{CHM} image.
+#' @param addSelectiveNoise boolean: if TRUE, add random noise to the \code{stemMap} image but only where values
+#'  in the image are 0. like \code{addNoise}, this seems to help with the matching process when you have areas
+#'  of high density trees with heights similar to those on the plot. Use this in place of \code{addNoise}.
+#' @param includeRasters boolean: if TRUE, include the \code{CHM} and \code{stemMap} rasters in the
+#'  returned list.
 #'
 #' @return invisible list containing the offsets from the \code{(initialX,initialY)} position
 #'  and the (X,Y) for the best plot location.
@@ -163,9 +171,12 @@ findBestPlotLocationPhaseCorrelation <- function(
     stemMapBuffer = 1.0,
     cropCHM = TRUE,
     method = "buffer",
+    corrMethod = "cross",
     normalize = TRUE,
     addNoise = TRUE,
-    noiseMagnitude = 1.0
+    noiseMagnitude = 1.0,
+    addSelectiveNoise = TRUE,
+    includeRasters = FALSE
 ) {
   NAReplaceValue <- 0
 
@@ -242,21 +253,63 @@ findBestPlotLocationPhaseCorrelation <- function(
                          , background = 0
   )
 
+  # add random noise for background cells
+  if (addSelectiveNoise) {
+    r <- terra::rast(extent = terra::ext(CHM)
+                     , resolution = terra::res(CHM)[1]
+    )
+
+    # noise values
+    values(r) <- runif(nrow(r) * ncol(r), 1, max(range(referenceCHM)))
+
+    referenceCHM <- ifel(referenceCHM = 0, r, referenceCHM)
+
+    # new noise values
+    values(r) <- runif(nrow(r) * ncol(r), 1, max(range(PM)))
+
+    PM <- ifel(PM = 0, r, PM)
+  }
+
   # create matrix objects
   i1 <- terra::as.matrix(referenceCHM, wide = TRUE)
   i2 <- terra::as.matrix(PM, wide = TRUE)
 
+  # write matrix objects
+  #saveRDS(i1, "G:/R_Stuff/ONRCDroneLidar/CHM_matrix.rds")
+  #saveRDS(i2, "G:/R_Stuff/ONRCDroneLidar/PM_matrix.rds")
+
   # do correlation to get offset for stem map
-  shifts <- xcorr3d(i1,i2, normalize = normalize, addNoise = addNoise)
+  if (corrMethod == "cross") {
+    shifts <- xcorr3d(i1,i2, normalize = normalize, addNoise = addNoise)
+  } else {
+    shifts <- imagefx::pcorr3d(i1, i2)
+  }
 
-  # shift vector is rotated 90 degree clockwise
-  offsetX <- -shifts$max.shifts[2] * terra::res(CHM)[1]
-  offsetY <- shifts$max.shifts[1] * terra::res(CHM)[1]
+  # check for failure to find a better location
+  if (shifts$max.shifts[1] == 0 & shifts$max.shifts[2] == 0) {
+    offsetX <- 0
+    offsetY <- 0
+  } else {
+    # shift vector is rotated 90 degree clockwise
+    offsetX <- -shifts$max.shifts[2] * terra::res(CHM)[1]
+    offsetY <- shifts$max.shifts[1] * terra::res(CHM)[1]
+  }
 
-  invisible(return(list(offsetX = offsetX,
-                        offsetY = offsetY,
-                        newX = initialX + offsetX,
-                        newY = initialY + offsetY)
-                   )
-            )
+  if (includeRasters) {
+    invisible(return(list(offsetX = offsetX,
+                          offsetY = offsetY,
+                          newX = initialX + offsetX,
+                          newY = initialY + offsetY,
+                          CHM = referenceCHM,
+                          stemMap = PM)
+                      )
+              )
+  } else {
+    invisible(return(list(offsetX = offsetX,
+                          offsetY = offsetY,
+                          newX = initialX + offsetX,
+                          newY = initialY + offsetY)
+                     )
+              )
+  }
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/main.R
 \name{moveTreesToPlotXY}
 \alias{moveTreesToPlotXY}
-\title{Translates trees from a local origin to a refrence point.}
+\title{Translates trees from a local origin to a reference point.}
 \usage{
 moveTreesToPlotXY(
   trees,

@@ -16,9 +16,12 @@ findBestPlotLocationPhaseCorrelation(
   stemMapBuffer = 1,
   cropCHM = TRUE,
   method = "buffer",
+  corrMethod = "cross",
   normalize = TRUE,
   addNoise = TRUE,
-  noiseMagnitude = 1
+  noiseMagnitude = 1,
+  addSelectiveNoise = TRUE,
+  includeRasters = FALSE
 )
 }
 \arguments{
@@ -48,16 +51,26 @@ defined by the \code{(initialX,initialY)} and \code{searchRadius}.}
 \item{method}{character string defining the method used to handle the \code{CHM}. Possible
 values are "buffer" and "mask".}
 
+\item{corrMethod}{character string specifying the correlation method used. Options are \code{"cross"}
+or \code{"phase"}.}
+
 \item{normalize}{boolean: if TRUE, normalize the \code{CHM} and \code{stemMap} images by dividing
 by the mean value of each image.}
 
-\item{addNoise}{boolean: if TRUE, add random noise to the \code{stemMap} image. This helps
+\item{addNoise}{boolean: if TRUE, add random noise to the \code{stemMap} image. This seems to help
 with the matching process when you have areas of high density trees with heights
 similar to those on the plot.}
 
 \item{noiseMagnitude}{numeric value form 0.0 to 1.0 that is multiplied by the minimum
 and maximum values in the \code{CHM} image to set limits on the values used to add noise to
 the \code{CHM} image.}
+
+\item{addSelectiveNoise}{boolean: if TRUE, add random noise to the \code{stemMap} image but only where values
+in the image are 0. like \code{addNoise}, this seems to help with the matching process when you have areas
+of high density trees with heights similar to those on the plot. Use this in place of \code{addNoise}.}
+
+\item{includeRasters}{boolean: if TRUE, include the \code{CHM} and \code{stemMap} rasters in the
+returned list.}
 }
 \value{
 invisible list containing the offsets from the \code{(initialX,initialY)} position
@@ -73,7 +86,7 @@ the trees on a plot. Each tree location is buffered using \code{stemMapBuffer} a
 the buffer are assigned the tree height.
 }
 \details{
-The shift of the stem map image that best aligns with the CHM image is determined using phase correlation
+The shift of the stem map image that best aligns with the CHM image is determined using cross correlation
 and converted into a new coordinate for the reference point. This new coordinate can be used to translate
 the trees in the \code{stemMap}.
 }

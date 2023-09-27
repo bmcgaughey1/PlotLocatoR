@@ -2,7 +2,7 @@
 % Please edit documentation in R/phaseCorrelation.R
 \name{xcorr3d}
 \alias{xcorr3d}
-\title{xcoor3d: perform image registration using phase correlation. This function
+\title{xcoor3d: perform image registration using cross correlation. This function
 was taken from the imagefx package and modified to better handle NA values
 in the image matrices.}
 \usage{
@@ -32,7 +32,7 @@ and maximum values in \code{img1} to set limits on the values used to add noise 
    corr.mat
 }
 \description{
-xcoor3d: perform image registration using phase correlation. This function
+xcoor3d: perform image registration using cross correlation. This function
 was taken from the imagefx package and modified to better handle NA values
 in the image matrices.
 }

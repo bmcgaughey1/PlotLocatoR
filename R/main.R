@@ -400,7 +400,7 @@ computeTreePositions <- function(
   return(t)
 }
 
-#' Translates trees from a local origin to a refrence point.
+#' Translates trees from a local origin to a reference point.
 #'
 #' \code{moveTreesToPlotXY} assumes tree locations are relative to (0,0) and applies
 #' a simple translation operation to shift trees. If a stem map was initially created
