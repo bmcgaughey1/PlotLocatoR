@@ -409,6 +409,9 @@ computeTreePositions <- function(
 #' reference point and then call \code{moveTreesToPlotXY} again with the new reference
 #' point location.
 #'
+#' \code{moveTreesToPlotXY} can also be used to offset tree locations from their current
+#' location. In this case, \code{xRef, yRef} is added to each tree position.
+#'
 #' @param trees Data frame with tree information. Must contain at least azimuth and distance (m).
 #'  If adjusting distances to offset to the center of each tree, the data frame must contain
 #'  the DBH. By default, DBH should be in cm but you can include the \code{dbhConversionFactor}

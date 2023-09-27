@@ -37,3 +37,7 @@ with the incorrect X and Y multiplied by -1 to translate tree locations to a loc
 reference point and then call \code{moveTreesToPlotXY} again with the new reference
 point location.
 }
+\details{
+\code{moveTreesToPlotXY} can also be used to offset tree locations from their current
+location. In this case, \code{xRef, yRef} is added to each tree position.
+}
