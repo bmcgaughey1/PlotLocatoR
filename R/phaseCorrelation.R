@@ -281,18 +281,18 @@ findBestPlotLocationCorrelation <- function(
 
     if (tolower(addSelectiveNoise) == "chm" | tolower(addSelectiveNoise) == "both") {
       # noise values
-      #values(r) <- runif(nrow(r) * ncol(r), 1, minmax(referenceCHM)[[2]])
-      values(r) <- runif(nrow(r) * ncol(r), 1, minmax(referenceCHM)[[2]] * noiseMultiplier)
+      #values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]])
+      terra::values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]] * noiseMultiplier)
 
-      referenceCHM <- ifel(referenceCHM == 0, r, referenceCHM)
+      referenceCHM <- terra::ifel(referenceCHM == 0, r, referenceCHM)
     }
 
     if (tolower(addSelectiveNoise) == "stemmap" | tolower(addSelectiveNoise) == "both") {
       # new noise values
-      #values(r) <- runif(nrow(r) * ncol(r), 1, minmax(referenceCHM)[[2]])
-      values(r) <- runif(nrow(r) * ncol(r), 1, minmax(referenceCHM)[[2]] * noiseMultiplier)
+      #values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]])
+      terra::values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]] * noiseMultiplier)
 
-      PM <- ifel(PM == 0, r, PM)
+      PM <- terra::ifel(PM == 0, r, PM)
     }
   }
 
