@@ -47,7 +47,7 @@ library(devtools)
 devtools::install_github("bmcgaughey1/PlotLocatoR", build_vignettes = TRUE)
 ```
 
-## Example
+## Example using brute force approach
 
 The PlotLocatoR package includes sample data for a plot and a canopy height
 model (CHM) clipped to cover the area containing the "best" plot location. The
@@ -68,7 +68,7 @@ data included a special attribute for each tree indicating whether or not the
 tree was visible from above (LiDAR_visible). This attribute was used to select the 
 trees used for the location search.
 
-```{r}
+```{r BruteForce}
 library(PlotLocatoR)
 
 # load the plot data
@@ -112,10 +112,15 @@ CHM <- terra::rast("data/Plot13_CHM.tif")
 #P13FieldSubset$truncHt <- 4 + runif(nrow(P13FieldSubset), -0.1, 0.1)
 
 # plot the CHM with the original stem map and plot location
-terra::plot(CHM, main = "Plot 13--GNSS location")
-points(plotX, plotY, pch = 3, col = "red")
+terra::plot(CHM, main = "Plot 13--Original GNSS location")
+points(plotX, plotY, pch = 4, col = "red")
 points(P13$Xfield, P13$Yfield, pch = 3, col = "black")
 points(P13FieldSubset$Xfield, P13FieldSubset$Yfield, pch = 19, col = "black")
+legend("bottom"
+       , c("GNSS location", "plot trees", "trees used for alignment")
+       , col = c("red", "black", "black")
+       , pch = c(4, 3, 19)
+       )
 
 # perform a brute-force assessment of alternate plot locations
 # grid resolution for possible locations will match the cell size of the CHM
@@ -153,9 +158,57 @@ P13_mapAdj <- PlotLocatoR::computeTreePositions(P13Field,
 P13Adj <- data.frame(P13Field, P13_mapAdj)
 
 # plot everything
-terra::plot(CHM, main = "Plot 13--Adjusted location")
+terra::plot(CHM, main = "Plot 13--Adjusted location (brute force)")
 points(P13Adj$Xfield, P13Adj$Yfield, pch = 19, col = "magenta")
-points(plotXAdj, plotYAdj, pch = 9, col = "magenta")
+points(plotXAdj, plotYAdj, pch = 9, col = "black")
+legend("bottom"
+       , c("adjusted trees", "adjusted plot")
+       , col = c("magenta", "black")
+       , pch = c(19, 9))
 
+```
+
+## Example using FFT cross correlation
+
+This example uses cross correlation in the frequency domain using Fourier transforms. This method is commonly used in image registration
+but can be adapted to work with patterns of tree locations. In operation, a stem map for a large area is created by segmenting individual trees
+from a canopy height model to serve as the reference image. Then a stem map is created using plot measurements (stem-mapped trees). The two images
+are aligned by finding the location with the highest correlation in the frequency domain.
+
+The cross correlation method is MUCH faster than the brute force method. However, it does not always produce the best location for a plot. 
+This usually happens when you have dense stands with trees about the same height as those on the plot. The correlation in these areas is high
+so you end up with what appears to be a good location when, in fact the location is not correct. This problem stems from the fact that the 
+algorithm is designed for aligning images where you have a fairly complete picture so lots of features to raise the correlation. 
+the stem map generated for the plot only includes small areas around each tree so many fewer features to match.
+
+```{r CrossCorrelation}
+newLocation <- findBestPlotLocationCorrelation(
+    CHM,
+    P13FieldSubset,
+    initialX = plotX,
+    initialY = plotY,
+    searchRadius = 100,
+    stemLocationFields = c("Xfield", "Yfield"),
+    stemHeightField = "Ht_m",
+    CHMbuffer = 1.0,
+    stemMapBuffer = 1.0,
+    cropCHM = TRUE,
+    method = "mask",
+    addNoise = FALSE,
+    noiseMultiplier = 0.1,
+    addSelectiveNoise = "chm",
+    corrMethod = "cross",
+    includeRasters = FALSE
+)
+
+adjP13 <- moveTreesToPlotXY(P13FieldSubset, newLocation[[1]], newLocation[[2]])
+
+terra::plot(CHM, main = "Plot 13--Adjusted location (cross correlation)")
+points(plotX, plotY, pch = 4, col = "red")
+points(newLocation[[3]], newLocation[[4]], pch = 19, col = "cyan")
+points(adjP13$Xfield, adjP13$Yfield, pch = 3, col = "black")
+legend("bottom", c("original plot", "adjusted plot", "trees"), col = c("red", "cyan", "black"), 
+       pch = c(4, 19, 3))
+       
 ```
 
