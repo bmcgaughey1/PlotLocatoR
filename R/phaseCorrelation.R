@@ -220,6 +220,9 @@ findBestPlotLocationCorrelation <- function(
   TAO$X <- TAOxy[,1]
   TAO$Y <- TAOxy[,2]
 
+  # sort TAOs in increasing order by height
+  TAO <- TAO[order(TAO$Ht, decreasing = FALSE), ]
+
   TAOtrees <- sf::st_as_sf(TAO,
                            coords = c("X", "Y"),
                            remove = FALSE,
@@ -251,6 +254,9 @@ findBestPlotLocationCorrelation <- function(
     # keep original CHM values within TAO buffers
     referenceCHM <- TAOPM
   }
+
+  # sort stem map tree in increasing height order
+  stemMap <- stemMap[order(stemMap[, stemHeightField], decreasing = FALSE), ]
 
   # create stem map object
   trees <- sf::st_as_sf(stemMap
