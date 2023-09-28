@@ -48,7 +48,7 @@ xcorr3d <- function(
   }
 
   if (addNoise) {
-    img1 <- img1 + runif(length(img1), min(img1) * noiseMultiplier, max(img1) * noiseMultiplier)
+    img1 <- img1 + stats::runif(length(img1), min(img1) * noiseMultiplier, max(img1) * noiseMultiplier)
   }
 
   ## go to the frequency domain and take conjugate of first image
@@ -285,16 +285,16 @@ findBestPlotLocationCorrelation <- function(
 
     if (tolower(addSelectiveNoise) == "chm" | tolower(addSelectiveNoise) == "both") {
       # noise values
-      #values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]])
-      terra::values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]] * noiseMultiplier)
+      #values(r) <- stats::runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]])
+      terra::values(r) <- stats::runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]] * noiseMultiplier)
 
       referenceCHM <- terra::ifel(referenceCHM == 0, r, referenceCHM)
     }
 
     if (tolower(addSelectiveNoise) == "stemmap" | tolower(addSelectiveNoise) == "both") {
       # new noise values
-      #values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]])
-      terra::values(r) <- runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]] * noiseMultiplier)
+      #values(r) <- stats::runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]])
+      terra::values(r) <- stats::runif(nrow(r) * ncol(r), 1, terra::minmax(referenceCHM)[[2]] * noiseMultiplier)
 
       PM <- terra::ifel(PM == 0, r, PM)
     }

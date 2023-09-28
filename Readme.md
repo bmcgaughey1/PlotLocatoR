@@ -71,7 +71,7 @@ the location search.
 library(PlotLocatoR)
 
 # load the plot data
-P13Field <- read.csv("data/plot13.csv", 
+P13Field <- read.csv(system.file("extdata", "plot13.csv", package = "PlotLocatoR", mustWork = TRUE), 
                      header = TRUE,
                      stringsAsFactors = FALSE)
 
@@ -103,7 +103,7 @@ P13FieldSubset <- P13[P13$LiDAR_visible == "Y",]
 #P13FieldSubset <- P13
 
 # read the CHM into a terra SpatRaster object
-CHM <- terra::rast("data/Plot13_CHM.tif")
+CHM <- terra::rast(system.file("extdata", "plot13_CHM.tif", package = "PlotLocatoR", mustWork = TRUE))
 #CHM <- terra::rast("data/Plot13_CHM_4m_stems.tif")
 
 # set tree heights to 4m plus random variation...necessary or correlation is undefined
@@ -139,7 +139,7 @@ sr <- testPlotLocations(
 )
 ```
 
-![](README_files/figure-gfm/BruteForce-1.png)<!-- -->
+![](Readme_files/figure-gfm/BruteForce-1.png)<!-- -->
 
 ``` r
 
@@ -171,7 +171,7 @@ legend("bottom"
        , pch = c(19, 9))
 ```
 
-![](README_files/figure-gfm/BruteForce-2.png)<!-- -->
+![](Readme_files/figure-gfm/BruteForce-2.png)<!-- -->
 
 ## Example using FFT cross correlation
 
@@ -229,4 +229,4 @@ legend("bottom", c("original plot", "adjusted plot", "trees"), col = c("red", "c
        pch = c(4, 19, 3))
 ```
 
-![](README_files/figure-gfm/CrossCorrelation-1.png)<!-- -->
+![](Readme_files/figure-gfm/CrossCorrelation-1.png)<!-- -->
