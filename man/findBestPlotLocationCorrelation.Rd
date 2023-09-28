@@ -12,6 +12,7 @@ findBestPlotLocationCorrelation(
   searchRadius,
   stemLocationFields = c("X", "Y"),
   stemHeightField = "Ht",
+  TAOWindowSize = 5,
   CHMbuffer = 1,
   stemMapBuffer = 1,
   cropCHM = TRUE,
@@ -41,6 +42,10 @@ to crop the \code{CHM} to limit the area for the search. the \code{searchRadius}
 and Y values for the tree locations.}
 
 \item{stemHeightField}{character name of the field in \code{stemMap} containing the tree height.}
+
+\item{TAOWindowSize}{numeric value specifying the diameter of the search window used to detect
+local maxima in the \code{CHM}. This is the \code{ws} parameter used with \code{lidR::locate_trees}.
+The value should be in the same horizontal units as the \code{CHM}.}
 
 \item{CHMbuffer}{radius for each TAO detected in \code{CHM}}
 

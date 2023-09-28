@@ -133,6 +133,9 @@ xcorr3d <- function(
 #' @param stemLocationFields character list with the field names in \code{stemMap} containing the X
 #'  and Y values for the tree locations.
 #' @param stemHeightField character name of the field in \code{stemMap} containing the tree height.
+#' @param TAOWindowSize numeric value specifying the diameter of the search window used to detect
+#'  local maxima in the \code{CHM}. This is the \code{ws} parameter used with \code{lidR::locate_trees}.
+#'  The value should be in the same horizontal units as the \code{CHM}.
 #' @param CHMbuffer radius for each TAO detected in \code{CHM}
 #' @param stemMapBuffer radius for each tree in the \code{stemMap}
 #' @param cropCHM boolean to indicate whether or not the CHM should be cropped to the search area
@@ -173,6 +176,7 @@ findBestPlotLocationCorrelation <- function(
     searchRadius,
     stemLocationFields = c("X", "Y"),
     stemHeightField = "Ht",
+    TAOWindowSize = 5,
     CHMbuffer = 1.0,
     stemMapBuffer = 1.0,
     cropCHM = TRUE,
@@ -208,7 +212,7 @@ findBestPlotLocationCorrelation <- function(
 
   # find TAOs
   # generate local maxima
-  TAO <- lidR::locate_trees(CHM, lidR::lmf(ws = 5))
+  TAO <- lidR::locate_trees(CHM, lidR::lmf(ws = TAOWindowSize))
   TAO$Ht <- TAO$Z
 
   TAOxy <- sf::st_coordinates(TAO)
