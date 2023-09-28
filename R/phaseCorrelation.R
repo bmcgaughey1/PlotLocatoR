@@ -120,8 +120,8 @@ xcorr3d <- function(
 #' the buffer are assigned the tree height.
 #'
 #' The shift of the stem map image that best aligns with the CHM image is determined using cross correlation
-#' or phase correlation (depending on \code{corrMethod}) and converted into a new coordinate for the reference
-#' point. This new coordinate can be used to translate the trees in the \code{stemMap}.
+#' or phase correlation (depending on \code{corrMethod}) and the shift is converted into a new coordinate for
+#' the reference point. This new coordinate can be used to translate the trees in the \code{stemMap}.
 #'
 #' @param CHM SpatRaster representing the canopy height surface
 #' @param stemMap sf point object with tree positions based on \code{initialX,initialY} location
@@ -141,7 +141,11 @@ xcorr3d <- function(
 #' @param cropCHM boolean to indicate whether or not the CHM should be cropped to the search area
 #'  defined by the \code{(initialX,initialY)} and \code{searchRadius}.
 #' @param method character string defining the method used to handle the \code{CHM}. Possible
-#'  values are "buffer" and "mask".
+#'  values are "buffer" and "mask". In operation, individual trees are segmented from the \code{CHM}. When
+#'  \code{method="buffer"}, the tree objects are buffered using \code{CHMbuffer} and rasterized so the
+#'  entire circular area for each tree has the same height. When \code{method="mask"}, the tree objects
+#'  are buffered and rasterized but the raster is used as a mask on the original \code{CHM} so the area
+#'  for each tree has height values from the \code{CHM}.
 #' @param corrMethod character string specifying the correlation method used. Options are \code{"cross"}
 #'  or \code{"phase"}.
 #' @param normalize boolean: if TRUE, normalize the \code{CHM} and \code{stemMap} images by dividing
@@ -164,7 +168,8 @@ xcorr3d <- function(
 #'  returned list. This is primarily for debugging.
 #'
 #' @return invisible list containing the offsets from the \code{(initialX,initialY)} position
-#'  and the (X,Y) for the best plot location.
+#'  and the (X,Y) for the best plot location. if \code{includeRasters=TRUE}, the rasters used for the correlation are
+#'  returned in the list as well.
 #' @export
 #'
 # ' @examples
