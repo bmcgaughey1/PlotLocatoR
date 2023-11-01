@@ -128,7 +128,7 @@ xcorr3d <- function(
 #' @param initialX initial reference point location
 #' @param initialY initial reference point location
 #' @param searchRadius radius defining area for possible locations. \code{searchRadius} will be used
-#'  to crop the \code{CHM} to limit the area for the search. the \code{searchRadius} is only used when
+#'  to crop the \code{CHM} to limit the area for the search. The \code{searchRadius} is only used when
 #'  \code{cropCHM = TRUE}.
 #' @param stemLocationFields character list with the field names in \code{stemMap} containing the X
 #'  and Y values for the tree locations.
